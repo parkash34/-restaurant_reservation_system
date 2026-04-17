@@ -153,3 +153,7 @@ API_KEY=your_groq_api_key_here
 - restaurant.db is created automatically on first run
 - Session memory resets when server restarts
 - Menu and FAQ can be updated without changing code
+
+## 👤 Author
+
+**Ohm Parkash** — [LinkedIn](https://www.linkedin.com/in/om-parkash34/) · [GitHub](https://github.com/parkash34)
