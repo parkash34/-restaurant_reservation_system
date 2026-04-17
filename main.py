@@ -47,6 +47,8 @@ restaurant = {
 }
 
 def init_db():
+    """Initialize database and create tables if they don't exist."""
+
     connect = sqlite3.connect("restaurant.db")
     cursor = connect.cursor()
 
@@ -74,29 +76,112 @@ llm = ChatGroq(
 
 @tool
 def read_menu():
-    return None
+    """Reads the current restaurant menu from file.
+    Use this for any menu related questions."""
+    
+    try:
+        with open("menu.json", "r") as f:
+            menu = json.load(f)
+        result = "Our Menu:\n"
+        for category, items in menu.items():
+            result += f"\n{category.upper()}: {', '.join(items)}"
+        return result
+    except FileNotFoundError:
+        return "Menu file not found"
+    except Exception as e:
+        return f"Error reading menu: {str(e)}"
 
 @tool
 def read_faq():
-    return None
+    """Reads the restaurant FAQ document.
+    Use this when customer asks frequently asked questions."""
+
+    try:
+        with open("faq.txt", "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "FAQ document not found."
+    except Exception as e:
+        return f"Error reading FAQ: {str(e)}"
 
 
 @tool
-def save_reservation(name, date, time, people, reference, special_requirement):
-    return None
-
+def save_reservation(name : str, date : str, time : str, people : int, reference : int, special_requirement : str = None) -> str:
+    """Saves a reservation to the database.
+    Use this after booking a table to store the reservation permanently."""
+    try:
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+        cursor.execute("""
+            INSERT INTO reservations
+            (name, date, time, people, special_requirement_reference)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (name, date, time, people, special_requirement, reference))
+        connect.commit()
+        connect.close()
+        return f"Reversation saved successfully for {name}. Reference: {reference}"
+    except Exception as e:
+        return f"Error saving reservation: {str(e)}"
 @tool
 def get_reservation(name):
-    return None
+    """Retrieves reservation details for a customer by name.
+    Use this when customer asks about their existing reservation."""
+
+    try:
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+        cursor.execute("SELECT * FROM reservations WHERE name = ?", (name,)) 
+
+        rows = cursor.fetchall()
+        connect.close()
+
+        if not rows:
+            return f"No reservation found for {name}."
+        
+        result = f"Reservation for {name}:\n"
+        for row in rows:
+            result += f"Date: {row[2]}, Time: {row[3]}, People: {row[4]}, Reference: {row[6]}"
+        return result
+    except Exception as e:
+        return f"Error retrieving reservation: {str(e)}"
 
 @tool
 def cancel_reservation(reference):
-    return None
+    """Cancels a reservation by reference number.
+    Use this when customer wants to cancel their booking."""
 
+    try:
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+        cursor.execute(
+            "DELETE FROM reservations WHERE reference = ?", (reference,)
+        )
+        if cursor.rowcount == 0:
+            connect.close()
+            return f"No reservation found with reference {reference}."
+        
+        connect.commit()
+        connect.close()
+        return f"Reservation {reference} cancelled successfully."
+    except Exception as e:
+        return f"Error cancelling reservation {str(e)}"
 
 @tool
-def get_weather(city):
-    return None
+def get_weather(city: str) -> str:
+    """Gets current weather for a city."""
+    try:
+        response = requests.get(
+            f"https://wttr.in/{city}?format=3",
+            timeout=5
+        )
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.Timeout:
+        return "Weather service timed out. Please try again."
+    except requests.exceptions.ConnectionError:
+        return "Cannot connect to weather service."
+    except Exception as e:
+        return f"Error getting weather: {str(e)}"
 
 @tool
 def check_availability(date : str, time : str) -> str:
