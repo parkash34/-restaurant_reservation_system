@@ -110,10 +110,12 @@ def read_faq():
 
 
 @tool
-def save_reservation(name : str, date : str, time : str, people : str, reference : int, special_requirement : str = None) -> str:
+def save_reservation(name : str, date : str, time : str, people : str, reference : str, special_requirement : str = None) -> str:
     """Saves a reservation to the database.
     Use this after booking a table to store the reservation permanently."""
     try:
+        people = int(people)
+        reference = int(reference)
         connect = sqlite3.connect("restaurant.db")
         cursor = connect.cursor()
         cursor.execute("""
@@ -237,6 +239,9 @@ Always use read_faq() for policy questions
 Always call check_availability() before booking
 Always call save_reservation() after book_table()
 Use get_weather() if customer mentions weather
+
+When calling save_reservation() always use the exact 
+reference number returned by book_table() in the same conversation turn.
 
 ANTI-HALLUCINATION RULES:
 - Only confirm menu items listed above
