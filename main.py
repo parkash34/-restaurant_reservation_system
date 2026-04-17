@@ -25,14 +25,14 @@ class Message(BaseModel):
     session_id : str
     message : str
 
-    @field_validator(session_id)
+    @field_validator("session_id")
     @classmethod
     def session_id_is_missing(cls, v):
         if not v.strip():
             raise ValueError("Session ID is missing")
         return v
     
-    @field_validator(message)
+    @field_validator("message")
     @classmethod
     def message_is_empty(cls, v):
         if not v.strip():
@@ -66,6 +66,7 @@ def init_db():
     connect.commit()
     connect.close()
 
+init_db()
 
 llm = ChatGroq(
     model = "llama-3.3-70b-versatile",
@@ -84,7 +85,10 @@ def read_menu():
             menu = json.load(f)
         result = "Our Menu:\n"
         for category, items in menu.items():
-            result += f"\n{category.upper()}: {', '.join(items)}"
+            if isinstance(items, list):
+                result += f"\n{category.upper()}: {', '.join(items)}"
+            else:
+                result += f"\n{category.upper()}: {str(items)}"
         return result
     except FileNotFoundError:
         return "Menu file not found"
@@ -106,7 +110,7 @@ def read_faq():
 
 
 @tool
-def save_reservation(name : str, date : str, time : str, people : int, reference : int, special_requirement : str = None) -> str:
+def save_reservation(name : str, date : str, time : str, people : str, reference : int, special_requirement : str = None) -> str:
     """Saves a reservation to the database.
     Use this after booking a table to store the reservation permanently."""
     try:
@@ -114,7 +118,7 @@ def save_reservation(name : str, date : str, time : str, people : int, reference
         cursor = connect.cursor()
         cursor.execute("""
             INSERT INTO reservations
-            (name, date, time, people, special_requirement_reference)
+            (name, date, time, people, special_requirement, reference)
             VALUES (?, ?, ?, ?, ?, ?)
             """, (name, date, time, people, special_requirement, reference))
         connect.commit()
@@ -191,16 +195,16 @@ def check_availability(date : str, time : str) -> str:
     return f"yes, we have tables are available on {date} at {time}."
 
 @tool
-def book_table(date: str, time: str, people: int, special_requirement: str = None) -> str:
+def book_table(date: str, time: str, people: str, special_requirement: str = None) -> str:
     """Books a table at the restaurants.
     Use this when customer wants to make a reservation.
     Requires date, time and number of people.
     Maximum 8 people per table
     """
-
-    if int(people) > 8:
+    people = int(people)
+    if people > 8:
         return "Sorry, maximum 8 people per table."
-    if int(people) < 1:
+    if people < 1:
         return "Please, provide a valid number of people"
     
     ref = random.randint(1000,9999)
@@ -217,15 +221,6 @@ tools = [
     cancel_reservation,
     get_weather
 ]
-
-
-restaurant = {
-    "name": "Bella Italia",
-    "opening_hours": "12 PM to 11 PM",
-    "location": "Astoria, New York",
-    "phone": "123-456-7890"
-}
-
 
 system_prompt = f"""You are Arda, a reliable assistant for Bella Italia restaurant.
 
@@ -275,7 +270,7 @@ def ai_chat(message : Message):
         "messages" : sessions[session_id]
     })
 
-    ai_message = result["message"][-1]
+    ai_message = result["messages"][-1]
 
     sessions[session_id].append(ai_message)
 
