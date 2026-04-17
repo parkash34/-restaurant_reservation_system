@@ -31,6 +31,7 @@ and API tools.
 | python-dotenv | Environment variable management |
 
 ## Project Structure
+```
 bella-italia-reservation/
 │
 ├── env/
@@ -40,24 +41,35 @@ bella-italia-reservation/
 ├── restaurant.db      ← created automatically
 ├── .env
 └── requirements.txt
+```
 
 ## Setup
 
 1. Clone the repository
+```
 git clone https://github.com/yourusername/bella-italia-reservation
+```
 
 2. Create and activate virtual environment
+```
 python -m venv env
 env\Scripts\activate
+```
 
 3. Install dependencies
+```
 pip install -r requirements.txt
+```
 
 4. Create `.env` file and add your Groq API key
+```
 API_KEY=your_groq_api_key_here
+```
 
 5. Run the server
+```
 uvicorn main:app --reload
+```
 
 ## API Endpoint
 
@@ -106,6 +118,7 @@ CREATE TABLE reservations (
 ```
 
 ## Booking Flow
+```
 Customer sends message
 ↓
 Agent checks availability
@@ -115,13 +128,14 @@ Agent books table and generates reference
 Agent saves reservation to database
 ↓
 Agent confirms with reference number
+```
 
 ## File Structure
-
+```
 **menu.json** — restaurant menu updated without code changes
 
 **faq.txt** — frequently asked questions updated without code changes
-
+```
 ## Validation Rules
 
 - Session ID cannot be empty
@@ -129,7 +143,9 @@ Agent confirms with reference number
 - Maximum 8 people per table
 
 ## Environment Variables
+```
 API_KEY=your_groq_api_key_here
+```
 
 ## Notes
 
